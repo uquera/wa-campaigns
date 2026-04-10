@@ -170,12 +170,14 @@ export default function NewCampaignPage() {
                 <p className="text-xs text-zinc-400 mb-1">Vista previa del mensaje:</p>
                 <p className="whitespace-pre-wrap">{selectedTemplate.body}</p>
                 {selectedTemplate.buttons && (
-                  <div className="flex gap-2 mt-2">
-                    {JSON.parse(selectedTemplate.buttons).map((b: { text: string }, i: number) => (
+                  <div className="flex gap-2 mt-2 flex-wrap">
+                    {JSON.parse(selectedTemplate.buttons).map((b: { text: string; type?: string; value?: string }, i: number) => (
                       <span
                         key={i}
-                        className="text-xs border border-zinc-300 rounded px-2 py-1"
+                        className="text-xs border border-zinc-300 rounded px-2 py-1 flex items-center gap-1"
                       >
+                        {b.type === "URL" && "🔗"}
+                        {b.type === "PHONE_NUMBER" && "📞"}
                         {b.text}
                       </span>
                     ))}

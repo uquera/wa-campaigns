@@ -15,6 +15,24 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
+interface ButtonRow {
+  text: string
+  type: "QUICK_REPLY" | "URL" | "PHONE_NUMBER"
+  value: string
+}
+
+const BUTTON_TYPE_LABELS: Record<string, string> = {
+  QUICK_REPLY: "Respuesta rápida",
+  URL: "Abrir URL",
+  PHONE_NUMBER: "Llamar",
+}
+
+const BUTTON_VALUE_PLACEHOLDER: Record<string, string> = {
+  QUICK_REPLY: "",
+  URL: "https://wa.me/56912345678",
+  PHONE_NUMBER: "+56912345678",
+}
+
 export default function NewTemplatePage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -29,7 +47,9 @@ export default function NewTemplatePage() {
     body: "",
   })
 
-  const [buttons, setButtons] = useState<string[]>([""])
+  const [buttons, setButtons] = useState<ButtonRow[]>([
+    { text: "", type: "URL", value: "" },
+  ])
 
   function set(field: string, value: string) {
     setForm((f) => ({ ...f, [field]: value }))
@@ -44,12 +64,34 @@ export default function NewTemplatePage() {
       .replace(/[^a-z0-9_]/g, "")
   }
 
+  function updateButton(i: number, field: keyof ButtonRow, val: string) {
+    setButtons((prev) => {
+      const next = [...prev]
+      next[i] = { ...next[i], [field]: val }
+      return next
+    })
+  }
+
+  function addButton() {
+    setButtons((prev) => [...prev, { text: "", type: "URL", value: "" }])
+  }
+
+  function removeButton(i: number) {
+    setButtons((prev) => prev.filter((_, j) => j !== i))
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
     setLoading(true)
 
-    const btns = buttons.filter((b) => b.trim()).map((text) => ({ text: text.trim() }))
+    const btns = buttons
+      .filter((b) => b.text.trim())
+      .map((b) => ({
+        text: b.text.trim(),
+        type: b.type,
+        value: b.value.trim() || undefined,
+      }))
 
     const res = await fetch("/api/templates", {
       method: "POST",
@@ -94,7 +136,7 @@ export default function NewTemplatePage() {
                   set("displayName", e.target.value)
                   set("name", autoName(e.target.value))
                 }}
-                placeholder="Ej: Promoción Salchichas Junio"
+                placeholder="Ej: Promoción Junio"
                 required
               />
             </div>
@@ -107,7 +149,7 @@ export default function NewTemplatePage() {
               <Input
                 value={form.name}
                 onChange={(e) => set("name", autoName(e.target.value))}
-                placeholder="promocion_salchichas_junio"
+                placeholder="promocion_junio"
                 required
                 className="font-mono text-sm"
               />
@@ -160,54 +202,126 @@ export default function NewTemplatePage() {
               <Textarea
                 value={form.body}
                 onChange={(e) => set("body", e.target.value)}
-                placeholder={"Hola {{1}} 👋\n\nTenemos descuentos especiales en salchichas esta semana.\n\nRevisa tu oferta aquí >"}
+                placeholder={"Hola {{1}} 👋\n\nTenemos descuentos esta semana.\n\nRevisa tu oferta aquí >"}
                 rows={6}
                 required
               />
               <p className="text-xs text-zinc-400">
-                Usa {"{{"} {"1"} {"}}"}, {"{{"} {"2"} {"}}"} para variables (ej: nombre del cliente).
+                Usa {"{{"} {"1"} {"}}"} para variables (ej: nombre del cliente).
               </p>
             </div>
 
-            <div className="space-y-2">
+            {/* Buttons */}
+            <div className="space-y-3">
               <Label>
-                Botones de respuesta rápida{" "}
+                Botones{" "}
                 <span className="text-zinc-400 font-normal">(máx 3)</span>
               </Label>
+
               {buttons.map((btn, i) => (
-                <div key={i} className="flex gap-2">
-                  <Input
-                    value={btn}
-                    onChange={(e) => {
-                      const next = [...buttons]
-                      next[i] = e.target.value
-                      setButtons(next)
-                    }}
-                    placeholder={`Botón ${i + 1} (ej: Realizar Pedido)`}
-                  />
-                  {buttons.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setButtons(buttons.filter((_, j) => j !== i))}
-                    >
-                      ✕
-                    </Button>
+                <div key={i} className="border border-zinc-200 rounded-lg p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-zinc-500">Botón {i + 1}</span>
+                    {buttons.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeButton(i)}
+                        className="text-xs text-zinc-400 hover:text-red-500"
+                      >
+                        Eliminar
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Tipo</Label>
+                      <Select
+                        value={btn.type}
+                        onValueChange={(v) => v && updateButton(i, "type", v)}
+                      >
+                        <SelectTrigger className="h-8 text-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="URL">Abrir URL</SelectItem>
+                          <SelectItem value="PHONE_NUMBER">Llamar</SelectItem>
+                          <SelectItem value="QUICK_REPLY">Respuesta rápida</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Texto del botón</Label>
+                      <Input
+                        value={btn.text}
+                        onChange={(e) => updateButton(i, "text", e.target.value)}
+                        placeholder="Ej: Ver oferta"
+                        className="h-8 text-sm"
+                        maxLength={25}
+                      />
+                    </div>
+                  </div>
+
+                  {btn.type !== "QUICK_REPLY" && (
+                    <div className="space-y-1">
+                      <Label className="text-xs">
+                        {btn.type === "URL" ? "URL de destino" : "Número de teléfono"}
+                      </Label>
+                      <Input
+                        value={btn.value}
+                        onChange={(e) => updateButton(i, "value", e.target.value)}
+                        placeholder={BUTTON_VALUE_PLACEHOLDER[btn.type]}
+                        className="h-8 text-sm font-mono"
+                      />
+                      {btn.type === "URL" && (
+                        <p className="text-xs text-zinc-400">
+                          Para redirigir a WhatsApp usa: https://wa.me/56912345678
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
               ))}
+
               {buttons.length < 3 && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setButtons([...buttons, ""])}
-                >
+                <Button type="button" variant="outline" size="sm" onClick={addButton}>
                   + Agregar botón
                 </Button>
               )}
+
+              <div className="text-xs text-zinc-400 bg-amber-50 border border-amber-100 rounded p-2">
+                <strong>Importante:</strong> configura los botones con los mismos valores en Meta Business Suite al crear el template. Meta aprueba el template completo incluyendo URLs y teléfonos.
+              </div>
             </div>
+
+            {/* Preview */}
+            {(form.body || buttons.some((b) => b.text)) && (
+              <div className="space-y-1">
+                <Label className="text-xs text-zinc-400">Vista previa</Label>
+                <div className="bg-[#e9fbe5] rounded-xl p-3 text-sm space-y-2 max-w-xs">
+                  {form.headerImage && (
+                    <div className="bg-zinc-200 rounded-lg h-32 flex items-center justify-center text-xs text-zinc-400">
+                      Imagen de encabezado
+                    </div>
+                  )}
+                  <p className="whitespace-pre-wrap text-zinc-800">{form.body || "..."}</p>
+                  {buttons.filter((b) => b.text).length > 0 && (
+                    <div className="border-t border-green-200 pt-2 space-y-1">
+                      {buttons.filter((b) => b.text).map((btn, i) => (
+                        <div
+                          key={i}
+                          className="text-center text-[#00a884] text-xs font-medium py-1 border border-green-200 rounded"
+                        >
+                          {btn.type === "URL" && "🔗 "}
+                          {btn.type === "PHONE_NUMBER" && "📞 "}
+                          {btn.text}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {error && (
               <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
@@ -219,11 +333,7 @@ export default function NewTemplatePage() {
               <Button type="submit" disabled={loading} className="bg-green-600 hover:bg-green-700">
                 {loading ? "Guardando..." : "Guardar template"}
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.push("/templates")}
-              >
+              <Button type="button" variant="outline" onClick={() => router.push("/templates")}>
                 Cancelar
               </Button>
             </div>

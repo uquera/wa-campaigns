@@ -2,8 +2,12 @@ const PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID!
 const TOKEN = process.env.WHATSAPP_TOKEN!
 const BASE_URL = "https://graph.facebook.com/v21.0"
 
+export type ButtonType = "QUICK_REPLY" | "URL" | "PHONE_NUMBER"
+
 export interface TemplateButton {
   text: string
+  type: ButtonType
+  value?: string // URL para tipo URL, teléfono para PHONE_NUMBER
 }
 
 export interface SendTemplateParams {
@@ -33,12 +37,7 @@ export async function sendTemplateMessage({
   if (headerImageUrl) {
     components.push({
       type: "header",
-      parameters: [
-        {
-          type: "image",
-          image: { link: headerImageUrl },
-        },
-      ],
+      parameters: [{ type: "image", image: { link: headerImageUrl } }],
     })
   }
 
@@ -49,13 +48,27 @@ export async function sendTemplateMessage({
     })
   }
 
+  // Solo QUICK_REPLY requiere parámetros al enviar.
+  // URL y PHONE_NUMBER son estáticos — la URL/teléfono está en el template aprobado en Meta.
   buttons.forEach((btn, index) => {
-    components.push({
-      type: "button",
-      sub_type: "quick_reply",
-      index,
-      parameters: [{ type: "payload", payload: btn.text }],
-    })
+    if (btn.type === "QUICK_REPLY") {
+      components.push({
+        type: "button",
+        sub_type: "quick_reply",
+        index,
+        parameters: [{ type: "payload", payload: btn.text }],
+      })
+    }
+    // URL con sufijo dinámico (ej: ID de pedido personalizado por contacto)
+    if (btn.type === "URL" && btn.value?.includes("{{1}}")) {
+      components.push({
+        type: "button",
+        sub_type: "url",
+        index,
+        parameters: [{ type: "text", text: "" }],
+      })
+    }
+    // PHONE_NUMBER: sin parámetros necesarios
   })
 
   try {
@@ -80,9 +93,7 @@ export async function sendTemplateMessage({
     const data = await res.json()
 
     if (!res.ok) {
-      const errMsg =
-        data?.error?.message ?? `HTTP ${res.status}`
-      return { error: errMsg }
+      return { error: data?.error?.message ?? `HTTP ${res.status}` }
     }
 
     return { messageId: data?.messages?.[0]?.id }

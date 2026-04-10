@@ -60,12 +60,19 @@ export default async function TemplatesPage() {
                   </div>
                   {buttons.length > 0 && (
                     <div className="flex gap-2 flex-wrap">
-                      {buttons.map((btn: { text: string }, i: number) => (
+                      {buttons.map((btn: { text: string; type?: string; value?: string }, i: number) => (
                         <span
                           key={i}
-                          className="text-xs border border-zinc-200 rounded px-2 py-1 text-zinc-600"
+                          className="text-xs border border-zinc-200 rounded px-2 py-1 text-zinc-600 flex items-center gap-1"
                         >
-                          {btn.text}
+                          {btn.type === "URL" && <span>🔗</span>}
+                          {btn.type === "PHONE_NUMBER" && <span>📞</span>}
+                          <span>{btn.text}</span>
+                          {btn.value && (
+                            <span className="text-zinc-400 font-mono truncate max-w-[140px]">
+                              → {btn.value}
+                            </span>
+                          )}
                         </span>
                       ))}
                     </div>

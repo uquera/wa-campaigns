@@ -170,10 +170,13 @@ export default function CampaignDetailPage() {
             {campaign.template.body}
           </div>
           {campaign.template.buttons && (
-            <div className="flex gap-2">
-              {JSON.parse(campaign.template.buttons).map((b: { text: string }, i: number) => (
-                <span key={i} className="text-xs border border-zinc-200 rounded px-2 py-1">
+            <div className="flex gap-2 flex-wrap">
+              {JSON.parse(campaign.template.buttons).map((b: { text: string; type?: string; value?: string }, i: number) => (
+                <span key={i} className="text-xs border border-zinc-200 rounded px-2 py-1 flex items-center gap-1">
+                  {b.type === "URL" && "🔗"}
+                  {b.type === "PHONE_NUMBER" && "📞"}
                   {b.text}
+                  {b.value && <span className="text-zinc-400 font-mono text-[10px]">{b.value}</span>}
                 </span>
               ))}
             </div>
