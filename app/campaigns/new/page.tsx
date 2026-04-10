@@ -43,8 +43,8 @@ export default function NewCampaignPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/templates").then((r) => r.json()),
-      fetch("/api/contacts").then((r) => r.json()),
+      fetch("/wa/api/templates").then((r) => r.json()),
+      fetch("/wa/api/contacts").then((r) => r.json()),
     ]).then(([t, c]) => {
       setTemplates(t)
       setContacts(c)
@@ -89,7 +89,7 @@ export default function NewCampaignPage() {
 
     setLoading(true)
 
-    const res = await fetch("/api/campaigns", {
+    const res = await fetch("/wa/api/campaigns", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

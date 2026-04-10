@@ -24,7 +24,7 @@ export default function ContactsPage() {
 
   async function loadContacts() {
     setLoading(true)
-    const res = await fetch("/api/contacts")
+    const res = await fetch("/wa/api/contacts")
     const data = await res.json()
     setContacts(data)
     setLoading(false)
@@ -44,7 +44,7 @@ export default function ContactsPage() {
     const form = new FormData()
     form.append("file", file)
 
-    const res = await fetch("/api/contacts", { method: "POST", body: form })
+    const res = await fetch("/wa/api/contacts", { method: "POST", body: form })
     const data = await res.json()
 
     if (res.ok) {

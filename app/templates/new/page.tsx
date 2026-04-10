@@ -93,7 +93,7 @@ export default function NewTemplatePage() {
         value: b.value.trim() || undefined,
       }))
 
-    const res = await fetch("/api/templates", {
+    const res = await fetch("/wa/api/templates", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

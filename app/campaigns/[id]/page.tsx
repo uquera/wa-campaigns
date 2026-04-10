@@ -50,7 +50,7 @@ export default function CampaignDetailPage() {
   const [sendError, setSendError] = useState<string | null>(null)
 
   const loadCampaign = useCallback(async () => {
-    const res = await fetch(`/api/campaigns/${id}`)
+    const res = await fetch(`/wa/api/campaigns/${id}`)
     const data = await res.json()
     setCampaign(data)
   }, [id])
@@ -63,7 +63,7 @@ export default function CampaignDetailPage() {
     setSending(true)
     setSendError(null)
 
-    const res = await fetch(`/api/campaigns/${id}/send`, { method: "POST" })
+    const res = await fetch(`/wa/api/campaigns/${id}/send`, { method: "POST" })
     const data = await res.json()
 
     if (!res.ok) {
@@ -73,7 +73,7 @@ export default function CampaignDetailPage() {
     }
 
     // Start SSE stream for progress
-    const eventSource = new EventSource(`/api/campaigns/${id}/progress`)
+    const eventSource = new EventSource(`/wa/api/campaigns/${id}/progress`)
 
     eventSource.onmessage = (e) => {
       const p = JSON.parse(e.data)
